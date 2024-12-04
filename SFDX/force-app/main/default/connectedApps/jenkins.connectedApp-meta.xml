@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConnectedApp xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>gumber.ritika@gmail.com</contactEmail>
+    <label>jenkins</label>
+    <oauthConfig>
+        <callbackUrl>http://localhost:1717/OauthRedirect</callbackUrl>
+        <certificate>MIIDjDCCAnQCCQDsWm7IcqSfhTANBgkqhkiG9w0BAQsFADCBhzELMAkGA1UEBhMCSW4xEDAOBgNVBAgTB0hhcnlhbmExEDAOBgNVBAcTB0d1cmdhb24xDDAKBgNVBAoTA0lCTTENMAsGA1UECxMEU0ZEQzEPMA0GA1UEAxMGUml0aWthMSYwJAYJKoZIhvcNAQkBFhdndW1iZXIucml0aWthQGdtYWlsLmNvbTAeFw0yNDExMjExODI4MTJaFw0yNTExMjExODI4MTJaMIGHMQswCQYDVQQGEwJJbjEQMA4GA1UECBMHSGFyeWFuYTEQMA4GA1UEBxMHR3VyZ2FvbjEMMAoGA1UEChMDSUJNMQ0wCwYDVQQLEwRTRkRDMQ8wDQYDVQQDEwZSaXRpa2ExJjAkBgkqhkiG9w0BCQEWF2d1bWJlci5yaXRpa2FAZ21haWwuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAstnGfNtwdNu+tBEDavUT5RDmCGKAyotNrDEekAoFfowfDOptdORArG7ZE33XJfiUkBhzYjKtrSVXF3PYv8KTLOoFm9A+rklWA7JLe94ryshS8zaNW8QbfrO/LAls+aq/RzbqSn1kwfUYfSGBbkAGee8yY1cAbbW5yM4jeqtlrMWqmeR1726sh77vAsRG3gddTsJGe4DHDEQFUFPFHku2xgxH1OtgttshtOt2tVxaHDmH09JWOcCch0s6eipYShiJCKrGiXK8SjWshLlP+8XlZsgDBLYcrFnA87Zunob/58p9XuEDgvWDAwvBmbwpsGm4vz3iaikh13NtL1HPYJL/yQIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQBUQFj1Ks5Az5E+jjOLv4hu5DeQT58T+rCHEYUKacKHIpfu7NrgE7e7nJfycFEe/3ZaxrncgvlvY7pD0UetcvpQUJPk3Jvkv/nwNjT3in+oD8JhqvM2zwaiJ3qQCQ1L1L8oJpf6HgJFP1pavu2RBE8GVw1/S1fcP/L++tedShJXW0q/AYclv1MAuENcC//6HB7sjt3qp3R3ojdddouZw9E7eal14Oz92uiKFP2rngCFx1qy92iNypul9P294Uga2ikS8B/ZZblXEc5sRh/t9fxmHlNagrEe1jmiaRoSuQA7yLN7sSZ9polHnWU5MWyWKUBbpSiFWNiW3HfEwOVG/ffg</certificate>
+        <consumerKey>3MVG9qT0j3YAi4EtlEEYfm3WMneXVqvKnZdLKjwIyVKy83JWApaSE7qJkMm4_gb2RfoM4tJyI.Mov3.s5CscQ</consumerKey>
+        <isAdminApproved>true</isAdminApproved>
+        <isClientCredentialEnabled>false</isClientCredentialEnabled>
+        <isCodeCredentialEnabled>false</isCodeCredentialEnabled>
+        <isCodeCredentialPostOnly>false</isCodeCredentialPostOnly>
+        <isConsumerSecretOptional>false</isConsumerSecretOptional>
+        <isIntrospectAllTokens>false</isIntrospectAllTokens>
+        <isNamedUserJwtEnabled>false</isNamedUserJwtEnabled>
+        <isPkceRequired>true</isPkceRequired>
+        <isRefreshTokenRotationEnabled>false</isRefreshTokenRotationEnabled>
+        <isSecretRequiredForRefreshToken>true</isSecretRequiredForRefreshToken>
+        <isSecretRequiredForTokenExchange>false</isSecretRequiredForTokenExchange>
+        <isTokenExchangeEnabled>false</isTokenExchangeEnabled>
+        <scopes>Full</scopes>
+        <scopes>RefreshToken</scopes>
+    </oauthConfig>
+    <oauthPolicy>
+        <ipRelaxation>ENFORCE</ipRelaxation>
+        <isTokenExchangeFlowEnabled>false</isTokenExchangeFlowEnabled>
+        <refreshTokenPolicy>infinite</refreshTokenPolicy>
+    </oauthPolicy>
+    <profileName>System Administrator</profileName>
+</ConnectedApp>
