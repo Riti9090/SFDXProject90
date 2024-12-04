@@ -3,10 +3,17 @@
     {
       "path": "force-app",
       "default": true
+    },
+    {
+      "orgs": {
+        "username": "gumber.ritika-m3f0@force.com.dev",
+        "clientId": "3MVG9qT0j3YAi4EtlEEYfm3WMneXVqvKnZdLKjwIyVKy83JWApaSE7qJkMm4_gb2RfoM4tJyI.Mov3.s5CscQ",
+        "privateKey": "C:/Users/Ritika/Downloads/server.key"
+      }
     }
-  ],
+    ],
   "name": "SFDX",
   "namespace": "",
-  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sfdcLoginUrl": "https://test.salesforce.com",
   "sourceApiVersion": "62.0"
 }
