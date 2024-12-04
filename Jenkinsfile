@@ -51,14 +51,14 @@ pipeline {
                 }
             }
         }
-    stage('Deploy to QA Branch') {
+    stage('Deploy to QA Org') {
             steps {
                 script {
-                    // Checkout and deploy only delta changes to QA branch
-                    echo "Deploying delta changes to QA branch"
-                    sh "git checkout qa"
-                    sh "git merge ${env.CHANGE_TARGET}" // Merge PR into QA branch
-                    sh "git push origin qa"             // Push to the QA branch
+                    echo "Deploying delta changes to QA Salesforce Org"
+                    // Authenticate to Salesforce QA Org
+                    sh "echo ${SFDX_AUTH_URL_QA} | sfdx auth:sfdxurl:store -f -"
+                    // Deploy only the delta changes to the Salesforce QA Org
+                    sh "sfdx force:source:deploy -p ${env.CHANGED_FILES} --targetusername ${SFDX_AUTH_URL_QA} --checkonly --testlevel RunLocalTests"
                 }
             }
         }
