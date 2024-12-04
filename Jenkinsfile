@@ -34,11 +34,15 @@ pipeline {
      // Approval Step
     // -------------------------------------------------------------------------
             stage('Approval') {
-                input message: 'Do you approve deployment to the QA Org?',
-                      parameters: [
-                          string(defaultValue: 'yes', description: 'Approve deployment?', name: 'Approval')
-                      ]
-            }    
+            steps {
+                script {
+                    input message: 'Do you approve deployment to the QA Org?',
+                          parameters: [
+                              string(defaultValue: 'yes', description: 'Approve deployment?', name: 'Approval')
+                          ]
+                }
+            }
+        }  
 
     stage('Deploy to QA Branch') {
             steps {
@@ -62,4 +66,6 @@ pipeline {
                 }
             }
         }
+    }
+}        
     
