@@ -49,7 +49,8 @@ pipeline {
                 script {
                     // Checkout and deploy only delta changes to QA branch
                     echo "Deploying delta changes to QA branch"
-                    bat "git checkout qa"
+                    bat "git fetch"
+                    bat "git checkout -b qa origin/qa"
                     bat "git merge ${env.CHANGE_TARGET}" // Merge PR into QA branch
                     bat "git push origin qa"             // Push to the QA branch
                 }
