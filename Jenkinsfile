@@ -21,7 +21,7 @@ pipeline {
                     // Identify the changes between the latest commit and the last commit
                     echo "Identifying delta changes between last commit and latest commit"
                     // Get the list of changed files (relative paths)
-                    def changedFiles = bat(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim().split("\r\n")
+                    def changedFiles = bat(script: 'git diff --name-only @{u} HEAD', returnStdout: true).trim().split("\r\n")
                     echo "Changed files: ${changedFiles}"
 
                     // Store the changed files as an environment variable for later stages
