@@ -18,38 +18,26 @@ pipeline {
         }
 
         stage('Identify Delta Changes') {
-            steps {
-                script {
-                    echo "Identifying delta changes between last commit and latest commit"
+    steps {
+        script {
+            echo "Identifying delta changes between the last pushed commit on 'qa' branch and the new commit"
 
-                    // Ensure the current branch is checked out
-                    bat "git checkout ${env.BRANCH_NAME}"
+            // Fetch all branches to ensure local refs are up-to-date
+            bat "git fetch origin"
 
-                    // Check if the upstream branch is set
-                    def upstreamBranch = bat(script: 'git rev-parse --abbrev-ref --symbolic-full-name @{u} || echo no-upstream', returnStdout: true).trim()
+            // Get the latest commit hash of the `qa` branch
+            def qaLastCommit = bat(script: 'git rev-parse origin/qa', returnStdout: true).trim()
+            echo "Last pushed commit on 'qa' branch: ${qaLastCommit}"
 
-                    if (upstreamBranch == 'no-upstream') {
-                        echo "No upstream branch configured. Setting upstream to origin/${env.BRANCH_NAME}."
-                        // Set the upstream branch to the corresponding remote branch
-                        def branchExists = bat(script: "git ls-remote --exit-code --heads origin ${env.BRANCH_NAME}", returnStatus: true) == 0
-                        if (!branchExists) {
-                            echo "Branch ${env.BRANCH_NAME} does not exist on the remote, pushing it..."
-                            bat "git push --set-upstream origin ${env.BRANCH_NAME}"
-                        } else {
-                            bat "git branch --set-upstream-to=origin/${env.BRANCH_NAME}"
-                        }
-                    }
+            // Calculate the diff between the latest `qa` branch commit and the current HEAD
+            def changedFiles = bat(script: "git diff --name-only ${qaLastCommit} HEAD", returnStdout: true).trim().split("\r\n")
+            echo "Changed files since last commit on 'qa' branch: ${changedFiles}"
 
-                    // Get the list of changed files (relative paths)
-                    def changedFiles = bat(script: 'git diff --name-only @{u} HEAD', returnStdout: true).trim().split("\r\n")
-                    echo "Changed files: ${changedFiles}"
-
-                    // Store the changed files as an environment variable for later stages
-                    env.CHANGED_FILES = changedFiles.join(" ")
-                }
-            }
+            // Store the changed files as an environment variable for later stages
+            env.CHANGED_FILES = changedFiles.join(" ")
         }
-
+    }
+}
         // -------------------------------------------------------------------------
         // Approval Step
         // -------------------------------------------------------------------------
