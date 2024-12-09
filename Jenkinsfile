@@ -15,11 +15,19 @@ pipeline {
                 checkout scm
             }
         }
-    stage('Identify Delta Changes') {
+        stage('Identify Delta Changes') {
             steps {
                 script {
-                    // Identify the changes between the latest commit and the last commit
                     echo "Identifying delta changes between last commit and latest commit"
+                    
+                    // Check if the upstream branch is set
+                    def upstreamBranch = bat(script: 'git rev-parse --abbrev-ref --symbolic-full-name @{u} || echo no-upstream', returnStdout: true).trim()
+                    
+                    if (upstreamBranch == 'no-upstream') {
+                        echo "No upstream branch configured. Setting upstream to origin/${env.BRANCH_NAME}."
+                        bat "git branch --set-upstream-to=origin/${env.BRANCH_NAME}"
+                    }
+                    
                     // Get the list of changed files (relative paths)
                     def changedFiles = bat(script: 'git diff --name-only @{u} HEAD', returnStdout: true).trim().split("\r\n")
                     echo "Changed files: ${changedFiles}"
@@ -30,10 +38,10 @@ pipeline {
             }
         }
 
-     // -------------------------------------------------------------------------
-     // Approval Step
-    // -------------------------------------------------------------------------
-            stage('Approval') {
+        // -------------------------------------------------------------------------
+        // Approval Step
+        // -------------------------------------------------------------------------
+        stage('Approval') {
             steps {
                 script {
                     input message: 'Do you approve deployment to the QA Org?',
@@ -42,12 +50,11 @@ pipeline {
                           ]
                 }
             }
-        }  
+        }
 
-    stage('Deploy to QA Branch') {
+        stage('Deploy to QA Branch') {
             steps {
                 script {
-                    // Checkout and deploy only delta changes to QA branch
                     echo "Deploying delta changes to QA branch"
                     bat "git fetch"
                     bat "git switch qa"
@@ -56,10 +63,11 @@ pipeline {
                 }
             }
         }
-    stage('Deploy to QA Org') {
+
+        stage('Deploy to QA Org') {
             steps {
                 script {
-                    echo "Deploying delta changes to QA Salesforce Org"
+                    echo "Deploying delta changes to Salesforce QA Org"
                     // Authenticate to Salesforce QA Org
                     bat "echo ${SFDX_AUTH_URL_QA} | sfdx auth:sfdxurl:store -f -"
                     // Deploy only the delta changes to the Salesforce QA Org
@@ -68,5 +76,4 @@ pipeline {
             }
         }
     }
-}        
-    
+}
