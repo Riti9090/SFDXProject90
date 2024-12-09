@@ -71,3 +71,5 @@ pipeline {
                 }
             }
         }
+    } // Close stages
+} // Close pipeline
