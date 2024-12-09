@@ -17,7 +17,7 @@ pipeline {
             }
         }
 
-        stage('Identify Delta Changes') {
+       stage('Identify Delta Changes') {
     steps {
         script {
             echo "Identifying delta changes between the last pushed commit on 'qa' branch and the new commit"
@@ -25,16 +25,31 @@ pipeline {
             // Fetch all branches to ensure local refs are up-to-date
             bat "git fetch origin"
 
-            // Get the latest commit hash of the `qa` branch
-            def qaLastCommit = bat(script: 'git rev-parse origin/qa', returnStdout: true).trim()
-            echo "Last pushed commit on 'qa' branch: ${qaLastCommit}"
+            try {
+                // Check if the 'qa' branch exists on the remote
+                def qaBranchExists = bat(script: 'git ls-remote --heads origin qa', returnStatus: true) == 0
 
-            // Calculate the diff between the latest `qa` branch commit and the current HEAD
-            def changedFiles = bat(script: "git diff --name-only ${qaLastCommit} HEAD", returnStdout: true).trim().split("\r\n")
-            echo "Changed files since last commit on 'qa' branch: ${changedFiles}"
+                if (!qaBranchExists) {
+                    error "'qa' branch does not exist on the remote. Please create it first."
+                }
 
-            // Store the changed files as an environment variable for later stages
-            env.CHANGED_FILES = changedFiles.join(" ")
+                // Get the latest commit hash of the `qa` branch
+                def qaLastCommit = bat(script: 'git rev-parse origin/qa', returnStdout: true).trim()
+                echo "Last pushed commit on 'qa' branch: ${qaLastCommit}"
+
+                // Calculate the diff between the latest `qa` branch commit and the current HEAD
+                def changedFiles = bat(script: "git diff --name-only ${qaLastCommit} HEAD", returnStdout: true).trim().split("\r\n")
+                
+                if (changedFiles.isEmpty()) {
+                    echo "No changes detected since the last commit on 'qa' branch."
+                    env.CHANGED_FILES = ''
+                } else {
+                    echo "Changed files since last commit on 'qa' branch: ${changedFiles}"
+                    env.CHANGED_FILES = changedFiles.join(" ")
+                }
+            } catch (Exception e) {
+                error "Error identifying delta changes: ${e.message}"
+            }
         }
     }
 }
