@@ -7,27 +7,39 @@ pipeline {
         SFDX_AUTH_URL_QA = credentials('sfdx-auth-qa')    // Salesforce org for QA
         SFDX_AUTH_URL_DEV = credentials('sfdx-auth-dev')   // Salesforce org for DEV
         SFDX_AUTH_URL_PROD = credentials('sfdx-auth-prod')  // Salesforce org for Production
-     }
+    }
     stages {
         stage('Checkout') {
             steps {
                 // Checkout code from the branch (PR branch)
                 checkout scm
+                bat "git fetch --all" // Ensure all remotes are fetched
             }
         }
+
         stage('Identify Delta Changes') {
             steps {
                 script {
                     echo "Identifying delta changes between last commit and latest commit"
-                    
+
+                    // Ensure the current branch is checked out
+                    bat "git checkout ${env.BRANCH_NAME}"
+
                     // Check if the upstream branch is set
                     def upstreamBranch = bat(script: 'git rev-parse --abbrev-ref --symbolic-full-name @{u} || echo no-upstream', returnStdout: true).trim()
-                    
+
                     if (upstreamBranch == 'no-upstream') {
                         echo "No upstream branch configured. Setting upstream to origin/${env.BRANCH_NAME}."
-                        bat "git branch --set-upstream-to=origin/${env.BRANCH_NAME}"
+                        // Set the upstream branch to the corresponding remote branch
+                        def branchExists = bat(script: "git ls-remote --exit-code --heads origin ${env.BRANCH_NAME}", returnStatus: true) == 0
+                        if (!branchExists) {
+                            echo "Branch ${env.BRANCH_NAME} does not exist on the remote, pushing it..."
+                            bat "git push --set-upstream origin ${env.BRANCH_NAME}"
+                        } else {
+                            bat "git branch --set-upstream-to=origin/${env.BRANCH_NAME}"
+                        }
                     }
-                    
+
                     // Get the list of changed files (relative paths)
                     def changedFiles = bat(script: 'git diff --name-only @{u} HEAD', returnStdout: true).trim().split("\r\n")
                     echo "Changed files: ${changedFiles}"
