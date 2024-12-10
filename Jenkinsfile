@@ -1,5 +1,3 @@
-import groovy.json.JsonSlurperClassic
-
 pipeline {
     agent any
     environment {
@@ -7,33 +5,39 @@ pipeline {
         SFDX_AUTH_URL_QA = credentials('sfdx-auth-qa')    // Salesforce org for QA
         SFDX_AUTH_URL_DEV = credentials('sfdx-auth-dev')   // Salesforce org for DEV
         SFDX_AUTH_URL_PROD = credentials('sfdx-auth-prod')  // Salesforce org for Production
-     }
+    }
     stages {
         stage('Checkout') {
             steps {
                 // Checkout code from the branch (PR branch)
                 checkout scm
+                bat "git fetch --all" // Ensure all remotes are fetched
             }
         }
-    stage('Identify Delta Changes') {
+
+        stage('Identify Delta Changes') {
             steps {
                 script {
-                    // Identify the changes between the latest commit and the last commit
-                    echo "Identifying delta changes between last commit and latest commit"
-                    // Get the list of changed files (relative paths)
-                    def changedFiles = bat(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim().split("\r\n")
-                    echo "Changed files: ${changedFiles}"
+                    echo "Identifying delta changes between the 'qa' branch and the current feature branch"
 
-                    // Store the changed files as an environment variable for later stages
-                    env.CHANGED_FILES = changedFiles.join(" ")
+                    // Run the validate-diff-change.sh script to get the list of changed files between 'qa' and the feature branch
+                    def changedFiles = bat ('scripts/bash/validate-diff-change.sh qa ${env.BRANCH_NAME}', returnStdout: true).trim()
+
+                    if (changedFiles.contains("No changes")) {
+                        echo "No changes detected between 'qa' and ${env.BRANCH_NAME}."
+                        env.CHANGED_FILES = ''
+                    } else {
+                        echo "Changed files: ${changedFiles}"
+                        env.CHANGED_FILES = changedFiles
+                    }
                 }
             }
         }
 
-     // -------------------------------------------------------------------------
-     // Approval Step
-    // -------------------------------------------------------------------------
-            stage('Approval') {
+        // -------------------------------------------------------------------------
+        // Approval Step
+        // -------------------------------------------------------------------------
+        stage('Approval') {
             steps {
                 script {
                     input message: 'Do you approve deployment to the QA Org?',
@@ -42,23 +46,24 @@ pipeline {
                           ]
                 }
             }
-        }  
+        }
 
-    stage('Deploy to QA Branch') {
+        stage('Deploy to QA Branch') {
             steps {
                 script {
-                    // Checkout and deploy only delta changes to QA branch
                     echo "Deploying delta changes to QA branch"
-                    bat "git checkout qa"
+                    bat "git fetch"
+                    bat "git switch qa"
                     bat "git merge ${env.CHANGE_TARGET}" // Merge PR into QA branch
                     bat "git push origin qa"             // Push to the QA branch
                 }
             }
         }
-    stage('Deploy to QA Org') {
+
+        stage('Deploy to QA Org') {
             steps {
                 script {
-                    echo "Deploying delta changes to QA Salesforce Org"
+                    echo "Deploying delta changes to Salesforce QA Org"
                     // Authenticate to Salesforce QA Org
                     bat "echo ${SFDX_AUTH_URL_QA} | sfdx auth:sfdxurl:store -f -"
                     // Deploy only the delta changes to the Salesforce QA Org
@@ -66,6 +71,5 @@ pipeline {
                 }
             }
         }
-    }
-}        
-    
+    } // Close stages
+} // Close pipeline
