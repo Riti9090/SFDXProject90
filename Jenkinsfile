@@ -21,7 +21,8 @@ pipeline {
                     echo "Identifying delta changes between the 'qa' branch and the current feature branch"
 
                     // Run the validate-diff-change.sh script to get the list of changed files between 'qa' and the feature branch
-                    def changedFiles = bat ('scripts/bash/validate-diff-change.sh qa ${env.BRANCH_NAME}', returnStdout: true).trim()
+                    def changedFiles = bat (script: "scripts/bash/validate-diff-change.sh qa ${env.BRANCH_NAME}", returnStdout: true).trim()
+    
 
                     if (changedFiles.contains("No changes")) {
                         echo "No changes detected between 'qa' and ${env.BRANCH_NAME}."
