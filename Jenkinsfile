@@ -18,7 +18,10 @@ pipeline {
         stage('Identify Delta Changes') {
             steps {
                 script {
+
                     echo "Identifying delta changes between the 'qa' branch and the current feature branch"
+                    bat "git fetch --all"
+                    bat "git pull"
 
                     // Run the validate-diff-change.sh script to get the list of changed files between 'qa' and the feature branch
                     def changedFiles = bat (script: "scripts/bash/validate-diff-change.sh qa ${env.BRANCH_NAME}", returnStdout: true).trim()
