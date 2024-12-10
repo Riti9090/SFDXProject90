@@ -5,6 +5,7 @@ pipeline {
         SFDX_AUTH_URL_QA = credentials('sfdx-auth-qa')    // Salesforce org for QA
         SFDX_AUTH_URL_DEV = credentials('sfdx-auth-dev')   // Salesforce org for DEV
         SFDX_AUTH_URL_PROD = credentials('sfdx-auth-prod')  // Salesforce org for Production
+        CHANGE_TARGET = 'qa' 
     }
     stages {
         stage('Checkout') {
