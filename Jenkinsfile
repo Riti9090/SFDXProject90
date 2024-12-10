@@ -9,7 +9,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout code from the branch (PR branch)
                 checkout scm
                 bat "git fetch --all" // Ensure all remotes are fetched
             }
@@ -18,14 +17,17 @@ pipeline {
         stage('Identify Delta Changes') {
             steps {
                 script {
-
                     echo "Identifying delta changes between the 'qa' branch and the current feature branch"
-
+                    
+                    // List files in scripts/bash for debugging
+                    bat "dir ${env.WORKSPACE}\\scripts\\bash"
+                    
                     // Run the validate-diff-change.sh script to get the list of changed files between 'qa' and the feature branch
                     def changedFiles = bat(script: "${env.WORKSPACE}\\scripts\\bash\\validate-diff-change.sh qa ${env.BRANCH_NAME}", returnStdout: true).trim()
-
-    
-
+                    
+                    // Print changed files for debugging
+                    echo "Changed files: ${changedFiles}"
+                    
                     if (changedFiles.contains("No changes")) {
                         echo "No changes detected between 'qa' and ${env.BRANCH_NAME}."
                         env.CHANGED_FILES = ''
@@ -37,9 +39,6 @@ pipeline {
             }
         }
 
-        // -------------------------------------------------------------------------
-        // Approval Step
-        // -------------------------------------------------------------------------
         stage('Approval') {
             steps {
                 script {
@@ -57,8 +56,15 @@ pipeline {
                     echo "Deploying delta changes to QA branch"
                     bat "git fetch"
                     bat "git switch qa"
-                    bat "git merge ${env.CHANGE_TARGET}" // Merge PR into QA branch
-                    bat "git push origin qa"             // Push to the QA branch
+                    
+                    // Check if CHANGE_TARGET is set
+                    if (env.CHANGE_TARGET) {
+                        bat "git merge ${env.CHANGE_TARGET}" // Merge PR into QA branch
+                    } else {
+                        error "CHANGE_TARGET is not defined. Cannot merge."
+                    }
+                    
+                    bat "git push origin qa" // Push to the QA branch
                 }
             }
         }
@@ -67,12 +73,16 @@ pipeline {
             steps {
                 script {
                     echo "Deploying delta changes to Salesforce QA Org"
-                    // Authenticate to Salesforce QA Org
-                    bat "echo ${SFDX_AUTH_URL_QA} | sfdx auth:sfdxurl:store -f -"
+                    
+                    withCredentials([string(credentialsId: 'sfdx-auth-qa', variable: 'SFDX_AUTH_URL_QA')]) {
+                        // Authenticate to Salesforce QA Org
+                        bat "echo ${SFDX_AUTH_URL_QA} | sfdx auth:sfdxurl:store -f -"
+                    }
+                    
                     // Deploy only the delta changes to the Salesforce QA Org
                     bat "sfdx force:source:deploy -p ${env.CHANGED_FILES} --targetusername ${SFDX_AUTH_URL_QA} --checkonly --testlevel RunLocalTests"
                 }
             }
         }
-    } // Close stages
-} // Close pipeline
+    }
+}
