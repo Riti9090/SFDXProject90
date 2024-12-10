@@ -1,5 +1,3 @@
-import groovy.json.JsonSlurperClassic
-
 pipeline {
     agent any
     environment {
@@ -7,33 +5,42 @@ pipeline {
         SFDX_AUTH_URL_QA = credentials('sfdx-auth-qa')    // Salesforce org for QA
         SFDX_AUTH_URL_DEV = credentials('sfdx-auth-dev')   // Salesforce org for DEV
         SFDX_AUTH_URL_PROD = credentials('sfdx-auth-prod')  // Salesforce org for Production
-     }
+        CHANGE_TARGET = 'qa' 
+    }
     stages {
         stage('Checkout') {
             steps {
-                // Checkout code from the branch (PR branch)
                 checkout scm
+                bat "git fetch --all" // Ensure all remotes are fetched
             }
         }
-    stage('Identify Delta Changes') {
+
+        stage('Identify Delta Changes') {
             steps {
                 script {
-                    // Identify the changes between the latest commit and the last commit
-                    echo "Identifying delta changes between last commit and latest commit"
-                    // Get the list of changed files (relative paths)
-                    def changedFiles = bat(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim().split("\r\n")
+                    echo "Identifying delta changes between the 'qa' branch and the current feature branch"
+                    
+                    // List files in scripts/bash for debugging
+                    bat "dir ${env.WORKSPACE}\\scripts\\bash"
+                    
+                    // Run the validate-diff-change.sh script to get the list of changed files between 'qa' and the feature branch
+                    def changedFiles = bat(script: "${env.WORKSPACE}\\scripts\\bash\\validate-diff-change.sh qa ${env.BRANCH_NAME}", returnStdout: true).trim()
+                    
+                    // Print changed files for debugging
                     echo "Changed files: ${changedFiles}"
-
-                    // Store the changed files as an environment variable for later stages
-                    env.CHANGED_FILES = changedFiles.join(" ")
+                    
+                    if (changedFiles.contains("No changes")) {
+                        echo "No changes detected between 'qa' and ${env.BRANCH_NAME}."
+                        env.CHANGED_FILES = ''
+                    } else {
+                        echo "Changed files: ${changedFiles}"
+                        env.CHANGED_FILES = changedFiles
+                    }
                 }
             }
         }
 
-     // -------------------------------------------------------------------------
-     // Approval Step
-    // -------------------------------------------------------------------------
-            stage('Approval') {
+        stage('Approval') {
             steps {
                 script {
                     input message: 'Do you approve deployment to the QA Org?',
@@ -42,30 +49,41 @@ pipeline {
                           ]
                 }
             }
-        }  
+        }
 
-    stage('Deploy to QA Branch') {
+        stage('Deploy to QA Branch') {
             steps {
                 script {
-                    // Checkout and deploy only delta changes to QA branch
                     echo "Deploying delta changes to QA branch"
-                    bat "git checkout qa"
-                    bat "git merge ${env.CHANGE_TARGET}" // Merge PR into QA branch
-                    bat "git push origin qa"             // Push to the QA branch
+                    bat "git fetch"
+                    bat "git switch qa"
+                    
+                    // Check if CHANGE_TARGET is set
+                    if (env.CHANGE_TARGET) {
+                        bat "git merge ${env.CHANGE_TARGET}" // Merge PR into QA branch
+                    } else {
+                        error "CHANGE_TARGET is not defined. Cannot merge."
+                    }
+                    
+                    bat "git push origin qa" // Push to the QA branch
                 }
             }
         }
-    stage('Deploy to QA Org') {
+
+        stage('Deploy to QA Org') {
             steps {
                 script {
-                    echo "Deploying delta changes to QA Salesforce Org"
-                    // Authenticate to Salesforce QA Org
-                    bat "echo ${SFDX_AUTH_URL_QA} | sfdx auth:sfdxurl:store -f -"
+                    echo "Deploying delta changes to Salesforce QA Org"
+                    
+                    withCredentials([string(credentialsId: 'sfdx-auth-qa', variable: 'SFDX_AUTH_URL_QA')]) {
+                        // Authenticate to Salesforce QA Org
+                        bat "echo ${SFDX_AUTH_URL_QA} | sfdx auth:sfdxurl:store -f -"
+                    }
+                    
                     // Deploy only the delta changes to the Salesforce QA Org
                     bat "sfdx force:source:deploy -p ${env.CHANGED_FILES} --targetusername ${SFDX_AUTH_URL_QA} --checkonly --testlevel RunLocalTests"
                 }
             }
         }
     }
-}        
-    
+}
